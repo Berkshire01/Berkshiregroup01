@@ -1,0 +1,70 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>Berkshire Group — Employment Applications</title>
+<style>
+:root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#18212b;background:#f4f6f8}body{margin:0}main{max-width:1100px;margin:32px auto;padding:0 16px 40px}.panel{background:white;border:1px solid #dce2e8;border-radius:12px;padding:20px;margin:16px 0}input,button,select{font:inherit;padding:10px 12px;border:1px solid #b8c2cc;border-radius:7px}input{width:min(100%,420px);box-sizing:border-box;display:block;margin:8px 0 14px}button{cursor:pointer;background:#172b3a;color:white;margin:4px 4px 4px 0}button.secondary{background:white;color:#172b3a}table{width:100%;border-collapse:collapse}th,td{text-align:left;border-bottom:1px solid #e5e9ee;padding:10px 8px}.muted{color:#52606d}.error{color:#a12727}.hidden{display:none}.table-wrap{overflow-x:auto}a{color:#174f7a}dd{margin:0 0 10px 0;overflow-wrap:anywhere}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body><main>
+<h1>Employment applications</h1>
+<p class="muted">Private administrator dashboard. Applicant details and ID documents are sensitive; sign out on shared devices.</p>
+<section class="panel" id="login-panel"><h2>Administrator sign in</h2>
+<form id="login-form"><label for="email">Administrator email</label><input id="email" type="email" autocomplete="username" required>
+<label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required>
+<button type="submit">Sign in</button></form><p id="login-message" role="status" class="muted"></p></section>
+<section class="panel hidden" id="dashboard-panel"><button id="refresh" type="button">Refresh list</button><button id="sign-out" type="button" class="secondary">Sign out</button>
+<p id="status-message" role="status" class="muted"></p><div class="table-wrap"><table><thead><tr><th>Received</th><th>Reference</th><th>Status</th><th>Notification</th><th></th></tr></thead><tbody id="application-rows"></tbody></table></div></section>
+<section class="panel hidden" id="detail-panel"><h2>Application details</h2><p class="muted">Document links expire after 60 seconds. Do not forward or share them.</p><div id="detail-content"></div>
+<label for="new-status">Application status</label><select id="new-status"><option value="new">New</option><option value="in_review">In review</option><option value="interview">Interview</option><option value="hired">Hired</option><option value="rejected">Rejected</option><option value="withdrawn">Withdrawn</option></select>
+<button id="save-status" type="button">Save status</button><p id="detail-message" role="status" class="muted"></p></section>
+</main>
+<script>
+(function(){
+  // Only public browser settings belong here. Never add a service-role key.
+  var SUPABASE_URL="https://bpwatnrbqqvjotpfzcjy.supabase.co";
+  var SUPABASE_ANON_KEY="sb_publishable_PvfNsT2zBRKxUVBvE3grbg_WHSbTGpD";
+  var client=null,currentApplicationId=null;
+  var loginPanel=document.getElementById("login-panel"),dashboardPanel=document.getElementById("dashboard-panel"),detailPanel=document.getElementById("detail-panel");
+  var loginMessage=document.getElementById("login-message"),statusMessage=document.getElementById("status-message"),detailMessage=document.getElementById("detail-message");
+  function esc(value){return String(value==null?"":value).replace(/[&<>"']/g,function(c){return({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c];});}
+  async function adminRequest(body){
+    var sr=await client.auth.getSession(),token=sr.data.session&&sr.data.session.access_token;
+    if(!token)throw new Error("Session expired. Please sign in again.");
+    var response=await fetch(SUPABASE_URL.replace(/\/$/,"")+"/functions/v1/admin-employment",{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+token,"apikey":SUPABASE_ANON_KEY},body:JSON.stringify(body)});
+    var result=await response.json().catch(function(){return{};});if(!response.ok)throw new Error(result.error||"Request failed.");return result;
+  }
+  async function loadApplications(){
+    statusMessage.textContent="Loading applications…";statusMessage.className="muted";
+    try{var result=await adminRequest({action:"list",limit:100}),rows=result.applications||[];
+      document.getElementById("application-rows").innerHTML=rows.map(function(app){return "<tr><td>"+esc(new Date(app.created_at).toLocaleString())+"</td><td><code>"+esc(app.id)+"</code></td><td>"+esc(app.status)+"</td><td>"+esc(app.notification_status)+"</td><td><button type='button' data-id='"+esc(app.id)+"' class='view-application'>View</button></td></tr>";}).join("")||"<tr><td colspan='5'>No applications received yet.</td></tr>";
+      statusMessage.textContent=rows.length+" application(s).";
+      document.querySelectorAll(".view-application").forEach(function(button){button.addEventListener("click",function(){viewApplication(button.getAttribute("data-id"));});});
+    }catch(error){statusMessage.textContent=error.message;statusMessage.className="error";}
+  }
+  async function viewApplication(id){
+    currentApplicationId=id;detailMessage.textContent="Loading secure details…";detailMessage.className="muted";detailPanel.classList.remove("hidden");
+    try{var result=await adminRequest({action:"detail",id:id}),app=result.application,fields=app.payload||{};
+      var html="<p><strong>Reference:</strong> "+esc(app.id)+"</p><dl>";
+      Object.keys(fields).sort().forEach(function(key){var value=Array.isArray(fields[key])?fields[key].join(", "):fields[key];html+="<dt><strong>"+esc(key.replaceAll("_"," "))+"</strong></dt><dd>"+esc(value)+"</dd>";});
+      html+="</dl><p><a rel='noopener noreferrer' target='_blank' href='"+esc(app.documents.front_url)+"'>Open front of ID (temporary link)</a></p><p><a rel='noopener noreferrer' target='_blank' href='"+esc(app.documents.back_url)+"'>Open back of ID (temporary link)</a></p>";
+      document.getElementById("detail-content").innerHTML=html;document.getElementById("new-status").value=app.status;
+      detailMessage.textContent="Details loaded. Document links expire after 60 seconds.";
+    }catch(error){detailMessage.textContent=error.message;detailMessage.className="error";}
+  }
+  document.getElementById("login-form").addEventListener("submit",async function(event){
+    event.preventDefault();
+    if(!window.supabase||SUPABASE_URL.indexOf("REPLACE_")===0||SUPABASE_ANON_KEY.indexOf("REPLACE_")===0){loginMessage.textContent="Dashboard setup incomplete. Configure the Supabase project URL and public key in admin.html.";loginMessage.className="error";return;}
+    client=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);loginMessage.textContent="Signing in…";
+    var result=await client.auth.signInWithPassword({email:document.getElementById("email").value,password:document.getElementById("password").value});
+    if(result.error){loginMessage.textContent="Sign-in failed. Check the administrator account and password.";loginMessage.className="error";return;}
+    loginPanel.classList.add("hidden");dashboardPanel.classList.remove("hidden");await loadApplications();
+  });
+  document.getElementById("refresh").addEventListener("click",loadApplications);
+  document.getElementById("sign-out").addEventListener("click",async function(){if(client)await client.auth.signOut();client=null;currentApplicationId=null;dashboardPanel.classList.add("hidden");detailPanel.classList.add("hidden");loginPanel.classList.remove("hidden");document.getElementById("application-rows").innerHTML="";});
+  document.getElementById("save-status").addEventListener("click",async function(){if(!currentApplicationId)return;detailMessage.textContent="Saving…";try{await adminRequest({action:"update-status",id:currentApplicationId,status:document.getElementById("new-status").value});detailMessage.textContent="Status updated.";await loadApplications();}catch(error){detailMessage.textContent=error.message;detailMessage.className="error";}});
+})();
+</script></body></html>

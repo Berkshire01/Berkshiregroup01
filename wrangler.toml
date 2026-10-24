@@ -1,0 +1,6 @@
+name = "berkshire-group-visitor-relay"
+main = "worker.js"
+compatibility_date = "2026-10-07"
+
+[vars]
+ALLOWED_ORIGIN = "https://lindawyatt061-glitch.github.io"

@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Berkshire Group</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, sans-serif;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: #ffffff;
+            color: #212529;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .py-5 {
+            padding: 60px 0;
+        }
+
+        .bg-light {
+            background-color: #f8f9fa;
+        }
+
+        .bg-dark {
+            background-color: #212529;
+            color: #ffffff;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .mb-5 {
+            margin-bottom: 35px;
+        }
+
+        .title-line {
+            width: 50px;
+            height: 3px;
+            background-color: #212529;
+            margin: 10px auto 15px auto;
+        }
+
+        .bg-dark .title-line {
+            background-color: #ffffff;
+        }
+
+        .text-muted {
+            color: #6c757d;
+        }
+
+        /* NAVIGATION */
+        header.nav-header {
+            background-color: #ffffff;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            padding: 15px 0;
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-fallback {
+            display: inline-flex;
+            align-items: center;
+            color: #212529;
+            text-decoration: none;
+        }
+
+        .logo-fallback img {
+            display: block;
+            width: auto;
+            height: 72px;
+            max-width: 340px;
+            object-fit: contain;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 25px;
+        }
+
+        .nav-link-custom {
+            color: #495057;
+            font-weight: 600;
+            text-decoration: none;
+            font-size: 0.95rem;
+        }
+
+        /* HERO */
+        .hero-section {
+            background:
+                linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)),
+                url('images/hero-gallery-1.jpg')
+                no-repeat center center / cover;
+
+            min-height: 50vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: #ffffff;
+            padding: 40px 20px;
+        }
+
+        .hero-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .hero-subtitle {
+            font-size: 1.1rem;
+            max-width: 700px;
+            margin: 0 auto 25px auto;
+        }
+
+        .btn-pill {
+            display: inline-block;
+            padding: 10px 25px;
+            border: 2px solid #ffffff;
+            color: #ffffff;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+        }
+
+        /* GALLERIES */
+        .ex-gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        .gallery-card {
+            position: relative;
+            height: 220px;
+            background-color: #495057;
+            background-position: center;
+            background-size: cover;
+            border-radius: 6px;
+            display: flex;
+            align-items: flex-end;
+            overflow: hidden;
+        }
+
+        .card-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(
+                rgba(0,0,0,0.1),
+                rgba(0,0,0,0.85)
+            );
+            padding: 20px;
+            display: flex;
+            align-items: flex-end;
+        }
+
+        .card-overlay h5 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        /* AUTOMOTIVE BRANDS */
+        .brand-section {
+            margin-top: 45px;
+        }
+
+        .brand-grid {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-start;
+            gap: 14px;
+        }
+
+        .brand-group { width: auto; text-align: center; }
+
+        .brand-card {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            padding: 0;
+            box-shadow: none;
+            min-height: 45px;
+            cursor: pointer;
+        }
+
+        .brand-card:hover { transform: none; box-shadow: none; }
+
+        .brand-card img {
+            max-width: 100%;
+            max-height: 45px;
+            object-fit: contain;
+        }
+
+        .brand-photos {
+            display: none;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 12px;
+            width: min(500px, 90vw);
+        }
+
+        .brand-group.open .brand-photos { display: grid; }
+
+        .brand-photos img {
+            width: 100%;
+            height: 190px;
+            object-fit: cover;
+            border-radius: 6px;
+            display: block;
+        }
+
+        @media (max-width: 700px) {
+            .brand-photos { grid-template-columns: 1fr; }
+        }
+
+
+        /* ABOUT */
+        .about-card {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 25px 20px;
+            height: 240px;
+            background-color: #495057;
+            border-radius: 6px;
+            background-position: center;
+            background-size: cover;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .about-card-content {
+            position: relative;
+            z-index: 2;
+            color: #ffffff;
+        }
+
+        .about-card h5 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .about-card p {
+            font-size: 0.85rem;
+            color: #e9ecef;
+        }
+
+        /* CONTACT */
+        .split-layout {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 40px;
+        }
+
+        .split-col {
+            flex: 1 1 450px;
+            min-width: 300px;
+        }
+
+        .contact-list {
+            list-style: none;
+            margin-top: 20px;
+        }
+
+        .contact-list li {
+            margin-bottom: 12px;
+            color: #a8aeb4;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .form-col {
+            flex: 1 1 200px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.85rem;
+            color: #a8aeb4;
+            margin-bottom: 5px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            background: transparent;
+            border: 1px solid #495057;
+            color: #ffffff;
+            border-radius: 4px;
+        }
+
+        .btn-light {
+            background-color: #ffffff;
+            color: #212529;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        /* EMPLOYMENT */
+        .employment-intro {
+            text-align: center;
+            max-width: 850px;
+            margin: 0 auto 35px auto;
+        }
+
+        .employment-quote {
+            font-size: 1.35rem;
+            font-style: italic;
+            font-weight: 600;
+            margin: 20px 0 5px 0;
+        }
+
+        .employment-author {
+            color: #6c757d;
+            margin-bottom: 25px;
+        }
+
+        .employment-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 35px;
+        }
+
+        .employment-tab {
+            display: inline-block;
+            padding: 9px 18px;
+            border: 1px solid #dee2e6;
+            border-radius: 50px;
+            color: #495057;
+            text-decoration: none;
+            font-weight: 600;
+            background: #ffffff;
+        }
+
+        .employment-tab.active,
+        .employment-tab:hover {
+            background: #212529;
+            color: #ffffff;
+            border-color: #212529;
+        }
+
+        .employment-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        .employment-card {
+            background: #ffffff;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .employment-card h5 {
+            font-size: 1.15rem;
+            margin-bottom: 10px;
+        }
+
+        .employment-card p {
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-bottom: 18px;
+        }
+
+        .employment-card a {
+            display: inline-block;
+            color: #212529;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .employment-card a:hover {
+            text-decoration: underline;
+        }
+
+        /* EMPLOYMENT APPLICATION */
+        .employment-form-wrap {
+            max-width: 1000px;
+            margin: 45px auto 0 auto;
+            background: #ffffff;
+            border: 1px solid #cfcfcf;
+            padding: 18px;
+        }
+
+        .employment-form-wrap.hidden {
+            display: none;
+        }
+
+        .employment-form-wrap h3 {
+            text-align: center;
+            font-size: 1.65rem;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        .employment-paper {
+            border: 1px solid #222;
+            background: #ffffff;
+            color: #111111;
+        }
+
+        .employment-paper * {
+            color: #111111;
+        }
+
+        .employment-form-title {
+            background: #0b4aa2;
+            color: #ffffff !important;
+            text-align: center;
+            font-weight: 700;
+            padding: 10px;
+            text-transform: uppercase;
+        }
+
+        .employment-form-note {
+            background: #dedede;
+            text-align: center;
+            font-weight: 700;
+            padding: 7px;
+            border-top: 1px solid #222;
+            border-bottom: 1px solid #222;
+        }
+
+        .employment-form-row {
+            display: grid;
+            border-bottom: 1px solid #222;
+            min-height: 40px;
+        }
+
+        .employment-form-row.two {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .employment-form-row.three {
+            grid-template-columns: 1fr 1fr 1fr;
+        }
+
+        .employment-form-row.four {
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+        }
+
+        .employment-form-row.five {
+            grid-template-columns: 1fr 1.25fr 1.25fr 1fr 0.8fr;
+        }
+
+        .employment-form-cell {
+            padding: 6px 8px;
+            border-right: 1px solid #222;
+        }
+
+        .employment-form-cell:last-child {
+            border-right: none;
+        }
+
+        .employment-form-cell label {
+            display: block;
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 3px;
+        }
+
+        .employment-paper input,
+        .employment-paper select,
+        .employment-paper textarea {
+            width: 100%;
+            border: 0;
+            outline: 0;
+            background: #ffffff;
+            color: #111111;
+            padding: 3px 2px;
+            font-size: 0.9rem;
+        }
+
+        .employment-paper input[type="checkbox"] {
+            width: auto;
+            margin-right: 5px;
+        }
+
+        .employment-section-title {
+            background: #0b4aa2;
+            color: #ffffff !important;
+            text-align: center;
+            font-weight: 700;
+            padding: 7px;
+            border-bottom: 1px solid #222;
+            text-transform: uppercase;
+        }
+
+        .employment-education-head,
+        .employment-education-row {
+            display: grid;
+            grid-template-columns:
+                1.05fr
+                1.1fr
+                1.45fr
+                0.75fr
+                0.75fr;
+        }
+
+        .employment-education-head div {
+            background: #dedede;
+            font-weight: 700;
+            text-align: center;
+            padding: 7px 4px;
+            border-right: 1px solid #222;
+        }
+
+        .employment-education-head div:last-child,
+        .employment-education-row div:last-child {
+            border-right: none;
+        }
+
+        .employment-education-row {
+            min-height: 38px;
+            border-top: 1px solid #222;
+        }
+
+        .employment-education-row div {
+            border-right: 1px solid #222;
+            padding: 3px;
+        }
+
+        .employment-education-row label {
+            display: block;
+            font-weight: 700;
+            background: #dedede;
+            padding: 4px 7px;
+            margin: -3px;
+        }
+
+        .employment-days {
+            font-size: 0.78rem;
+            line-height: 1.45;
+        }
+
+        .employment-days span {
+            display: inline-block;
+            min-width: 43%;
+        }
+
+        .employment-checks {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .employment-id-box {
+            padding: 12px;
+            border-top: 1px solid #222;
+            background: #fafafa;
+        }
+
+        .employment-id-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .employment-upload {
+            border: 1px dashed #777;
+            padding: 12px;
+            background: #ffffff;
+        }
+
+        .employment-submit {
+            text-align: center;
+            padding: 20px 0 5px;
+        }
+
+        .employment-form-wrap .btn-dark {
+            background: #212529;
+            color: #ffffff;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        @media (max-width: 700px) {
+            .employment-form-row.two,
+            .employment-form-row.three,
+            .employment-form-row.four,
+            .employment-form-row.five,
+            .employment-id-grid,
+            .employment-education-head,
+            .employment-education-row {
+                grid-template-columns: 1fr;
+            }
+
+            .employment-form-cell {
+                border-right: none;
+                border-bottom: 1px solid #222;
+            }
+
+            .employment-education-head {
+                display: none;
+            }
+
+            .employment-education-row {
+                border-top: 0;
+            }
+
+            .employment-education-row div {
+                border-right: 0;
+                border-bottom: 1px solid #222;
+            }
+        }
+
+        /* FOOTER */
+        footer {
+            background-color: #000000;
+            color: #6c757d;
+            padding: 30px 0;
+            text-align: center;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            list-style: none;
+            gap: 25px;
+            margin-bottom: 15px;
+        }
+
+        .footer-links a {
+            color: #6c757d;
+            text-decoration: none;
+        }
+    
+        /* MOBILE SCREEN FIT */
+        html, body {
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+        }
+
+        img, video, iframe {
+            max-width: 100%;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .nav-container {
+            flex-wrap: wrap;
+            min-width: 0;
+        }
+
+        .nav-menu {
+            flex-wrap: wrap;
+            min-width: 0;
+        }
+
+        .split-col {
+            min-width: 0;
+        }
+
+        .form-control {
+            min-width: 0;
+            max-width: 100%;
+        }
+
+        @media (max-width: 700px) {
+            .container {
+                padding-left: 14px;
+                padding-right: 14px;
+            }
+
+            header.nav-header {
+                padding: 10px 0;
+            }
+
+            .nav-container {
+                flex-direction: column;
+                justify-content: center;
+                gap: 10px;
+            }
+
+            .logo-fallback img {
+                height: 54px;
+                max-width: min(280px, 90vw);
+            }
+
+            .nav-menu {
+                width: 100%;
+                justify-content: center;
+                gap: 8px 14px;
+            }
+
+            .nav-link-custom {
+                font-size: 0.82rem;
+            }
+
+            .hero-section {
+                min-height: 42vh;
+                padding: 32px 14px;
+                background-attachment: scroll;
+            }
+
+            .hero-title {
+                font-size: clamp(1.7rem, 7vw, 2.5rem);
+                overflow-wrap: anywhere;
+            }
+
+            .hero-subtitle {
+                font-size: 1rem;
+            }
+
+            .ex-gallery-grid,
+            .employment-grid {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .split-layout {
+                gap: 24px;
+            }
+
+            .split-col {
+                flex: 1 1 100%;
+                width: 100%;
+            }
+
+            .form-row {
+                width: 100%;
+            }
+
+            .form-col,
+            .form-group {
+                min-width: 0;
+                width: 100%;
+            }
+
+            .employment-tabs {
+                gap: 8px;
+            }
+
+            .employment-tab {
+                padding: 8px 13px;
+                font-size: 0.88rem;
+            }
+
+            .employment-form-wrap {
+                width: 100%;
+                padding: 10px;
+            }
+
+            .employment-paper {
+                width: 100%;
+                overflow-wrap: anywhere;
+            }
+
+            .contact-list li,
+            p,
+            h1, h2, h3, h4, h5, h6 {
+                overflow-wrap: break-word;
+            }
+
+            footer .container {
+                overflow-wrap: anywhere;
+            }
+        }
+
+    
+/* Mobile screen fit */
+html, body { width:100%; max-width:100%; overflow-x:hidden; }
+img, video, iframe, input, textarea, select, button { max-width:100%; box-sizing:border-box; }
+@media (max-width:700px){
+  .container{width:100%;max-width:100%;padding-left:14px;padding-right:14px;}
+  header.nav-header{padding:10px 0;}
+  .nav-container{flex-direction:column;gap:10px;width:100%;}
+  .logo-fallback img{height:auto;max-height:58px;max-width:78vw;}
+  .nav-menu{width:100%;display:flex;flex-wrap:wrap;justify-content:center;gap:8px 14px;padding:0;margin:0;}
+  .nav-link-custom{font-size:.86rem;white-space:normal;}
+  .hero-section{min-height:42vh;padding:34px 14px;background-attachment:scroll;}
+  .hero-title{font-size:clamp(1.7rem,7vw,2.25rem);overflow-wrap:anywhere;}
+  .hero-subtitle{font-size:1rem;overflow-wrap:anywhere;}
+  .py-5{padding-top:38px;padding-bottom:38px;}
+  .ex-gallery-grid,.employment-grid{grid-template-columns:minmax(0,1fr);gap:16px;width:100%;}
+  .gallery-card,.about-card{min-width:0;max-width:100%;}
+  .split-layout{gap:24px;}
+  .split-col{flex:1 1 100%;min-width:0;width:100%;}
+  .form-row{gap:12px;}
+  .form-col,.form-group{min-width:0;max-width:100%;}
+  .brand-grid{justify-content:center;gap:12px;max-width:100%;}
+  .brand-group{max-width:100%;}
+  .brand-photos{width:min(500px,calc(100vw - 28px));max-width:100%;}
+  .property-browser,.property-filter{max-width:100%;width:100%;}
+  .property-filter{display:flex;flex-wrap:wrap;gap:8px;}
+  .property-filter-link,.employment-tab{max-width:100%;white-space:normal;}
+  .employment-form-wrap{width:100%;max-width:100%;padding:10px;margin-top:28px;}
+  .employment-paper{width:100%;max-width:100%;overflow-wrap:anywhere;}
+  .employment-form-cell,.employment-education-row>div{min-width:0;overflow-wrap:anywhere;}
+  .footer-links{flex-wrap:wrap;gap:10px 16px;padding:0 12px;}
+}
+
+</style>
+</head>
+<body>
+    <!-- NAVIGATION -->
+    <header class="nav-header">
+        <div class="container nav-container">
+
+            <a href="index.html" class="logo-fallback">
+                <img
+                    src="images/logo-dark.png"
+                    alt="Berkshire Group"
+                    onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';"
+                >
+
+                <span
+                    id="brand-text"
+                    style="display:none; font-size:1.25rem; font-weight:700;"
+                >
+                    Berkshire Group
+                </span>
+            </a>
+
+            <ul class="nav-menu">
+                <li>
+                    <a class="nav-link-custom" href="automotive.html">
+                        Automotive
+                    </a>
+                </li>
+
+                <li>
+                    <a class="nav-link-custom" href="real-estate.html">
+                        Real Estate
+                    </a>
+                </li>
+
+                <li>
+                    <a class="nav-link-custom" href="employment.html">
+                        Employment
+                    </a>
+                </li>
+
+                <li>
+                    <a class="nav-link-custom" href="about.html">
+                        About Us
+                    </a>
+                </li>
+
+                <li>
+                    <a class="nav-link-custom" href="contact.html">
+                        Contact
+                    </a>
+                </li>
+            </ul>
+
+        </div>
+    </header>
+
+
+
+
+<!-- AUTOMOTIVE -->
+    <section id="automotive" class="py-5 bg-light">
+
+        <div class="container">
+
+            <div class="text-center mb-5">
+
+                <h2>
+                    Automotive Dealerships
+                </h2>
+
+                <div class="title-line"></div>
+
+                <p class="text-muted">
+                    Explore our premium multi-brand commercial vehicle ecosystems.
+                </p>
+
+            </div>
+
+
+            <div class="brand-section">
+                <div class="text-center mb-5">
+                    <h3>Automotive Brands</h3>
+                    <div class="title-line"></div>
+                    <p class="text-muted">Our automotive brand portfolio</p>
+                </div>
+
+                <div class="brand-grid">
+                <div class="brand-group">
+                    <div class="brand-card"><img src="https://www.spartan1.com/images/management/brand/acura.jpg" alt="Acura"></div>
+                    <div class="brand-photos">
+                        <img src="https://mpop-prod-primary.s3.amazonaws.com/acura-of-escondido-ca/img/69ab03f68c0d4-c8bbfe02-bf01-4808-81fc-f24df53fa2b3.jpg" alt="Acura vehicle or showroom photo 1">
+                        <img src="https://s8.localdatacdn.com/tx/sugar-land/5139444/original/O43dEk1pfP.jpg" alt="Acura vehicle or showroom photo 2">
+                    </div>
+                </div>
+                <div class="brand-group">
+                    <div class="brand-card"><img src="https://www.spartan1.com/images/management/brand/bmw.jpg" alt="BMW"></div>
+                    <div class="brand-photos">
+                        <img src="https://blog.vlan.asia/hs-fs/hubfs/autobavaria-1.jpeg?height=1334&name=autobavaria-1.jpeg&width=2000" alt="BMW vehicle or showroom photo 1">
+                        <img src="https://storage.googleapis.com/ats-public-files.ats.jobcan.jp/job_offer/main_image_file/2258226/BMW%E9%9D%92%E8%91%89%E5%AE%AE%E5%89%8D__3_.jpg" alt="BMW vehicle or showroom photo 2">
+                    </div>
+                </div>
+                <div class="brand-group">
+                    <div class="brand-card"><img src="https://www.spartan1.com/images/management/brand/cadillac.jpg" alt="Cadillac"></div>
+                    <div class="brand-photos">
+                        <img src="https://platform.cstatic-images.com/in/v2/dealer_media/13415244-49e6-59fb-8e23-1bd65cb37694/webready_SCH_interior.jpg" alt="Cadillac vehicle or showroom photo 1">
+                        <img src="https://pictures.dealer.com/f/fieldscadillacstaugustine/1374/ebf3651e8f683b78da83c66e59cbf232x.jpg" alt="Cadillac vehicle or showroom photo 2">
+                    </div>
+                </div>
+                <div class="brand-group">
+                    <div class="brand-card"><img src="https://www.spartan1.com/images/management/brand/chevy.jpg" alt="Chevrolet"></div>
+                    <div class="brand-photos">
+                        <img src="https://img.p.mapq.st/?q=75&url=https%3A%2F%2Fs3-media0.fl.yelpcdn.com%2Fbphoto%2FCa8WvVXU5GUK4vkqbXNRXg%2Fl.jpg&w=3840" alt="Chevrolet vehicle or showroom photo 1">
+                        <img src="https://di-uploads-pod12.dealerinspire.com/byerschevy/uploads/2024/08/Chevy-Truck-Dealer-Near-Columbus-OH.jpg" alt="Chevrolet vehicle or showroom photo 2">
+                    </div>
+                </div>
+                <div class="brand-group">
+                    <div class="brand-card"><img src="https://www.spartan1.com/images/management/brand/chrysler.jpg" alt="Chrysler"></div>
+                    <div class="brand-photos">
+                        <img src="https://vehicle-images.carscommerce.inc/9e75-18003220/2C4RC1BG4TR177854/5a99b7442c57d43cf168d97cdb4ee14a.jpg" alt="Chrysler vehicle or showroom photo 1">
+                        <img src="images/hero-gallery-2.jpg" alt="Chrysler vehicle or showroom photo 2">
+                    </div>
+                </div>
+                <div class="brand-group">
+                    <div class="brand-card"><img src="https://www.spartan1.com/images/management/brand/dodge.jpg" alt="Dodge"></div>
+                    <div class="brand-photos">
+                        <img src="https://vehicle-images.carscommerce.inc/70f1-110004565/1C4SDJCT7TC226435/thumbnails/large/e2769c2c3b8a3d4fad58ca2ba02381b7.jpg" alt="Dodge vehicle or showroom photo 1">
+                        <img src="images/hero-gallery-3.jpg" alt="Dodge vehicle or showroom photo 2">
+                    </div>
+                </div>
+                <div class="brand-group">
+                    <div class="brand-card"><img src="https://www.spartan1.com/images/management/brand/ford.jpg" alt="Ford"></div>
+                    <div class="brand-photos">
+                        <img src="https://service.secureoffersites.com//images/GetLibraryImage?fileNameOrId=710718" alt="Ford vehicle or showroom photo 1">
+                        <img src="https://s3.localdatacdn.com/ca/huntington-beach/4401165/original/TUnZTDIogP.jpg" alt="Ford vehicle or showroom photo 2">
+                    </div>
+                </div>
+                <div class="brand-group">
+                    <div class="brand-card"><img src="https://www.spartan1.com/images/management/brand/gmc.jpg" alt="GMC"></div>
+                    <div class="brand-photos">
+                        <img src="https://s10.localdatacdn.com/mo/cameron/4288539/original/80QvpAbMpI.jpeg" alt="GMC vehicle or showroom photo 1">
+                        <img src="https://static.adxcms.com/images/vehicle_3GTUUBED5TG262190/1024x683/95474d1a9544aaac1d7f2dca015be851.webp" alt="GMC vehicle or showroom photo 2">
+                    </div>
+                </div>
+                <div class="brand-group">
+                    <div class="brand-card"><img src="https://www.spartan1.com/images/management/brand/honda.jpg" alt="Honda"></div>
+                    <div class="brand-photos">
+                        <img src="https://www.riccimotors.it/data/pagine/img/58.jpg" alt="Honda vehicle or showroom photo 1">
+                        <img src="images/hero-gallery-4.jpg" alt="Honda vehicle or showroom photo 2">
+                    </div>
+                </div>
+                <div class="brand-group">
+                    <div class="brand-card"><img src="https://www.spartan1.com/images/management/brand/jeep.jpg" alt="Jeep"></div>
+                    <div class="brand-photos">
+                        <img src="https://platform.cstatic-images.com/in/v2/dealer_media/570bad47-abeb-500f-a3ca-e4689e496582/Kelly%20Jeep%202024.jpg" alt="Jeep vehicle or showroom photo 1">
+                        <img src="images/hero-gallery-1.jpg" alt="Jeep vehicle or showroom photo 2">
+                    </div>
+                </div>
+                <div class="brand-group">
+                    <div class="brand-card"><img src="https://www.spartan1.com/images/management/brand/nissan.jpg" alt="Nissan"></div>
+                    <div class="brand-photos">
+                        <img src="https://commons.wikimedia.org/wiki/Special:Redirect/file/Nissan_GT-R%20%2855061561086%29.jpg" alt="Nissan GT-R vehicle photo">
+                        <img src="https://commons.wikimedia.org/wiki/Special:Redirect/file/Nissan%20N7%20001.jpg" alt="Nissan N7 vehicle photo">
+                    </div>
+                </div>
+                <div class="brand-group">
+                    <div class="brand-card"><img src="https://www.spartan1.com/images/management/brand/ram.jpg" alt="RAM"></div>
+                    <div class="brand-photos">
+                        <img src="https://blob.diariodelyaqui.mx/images/2026/03/07/autos-new-1-987398cf-focus-0-0-1280-720.webp" alt="RAM vehicle or showroom photo 1">
+                        <img src="images/imagesabout2.jpg" alt="RAM vehicle or showroom photo 2">
+                    </div>
+                </div>
+                <div class="brand-group">
+                    <div class="brand-card"><img src="https://www.spartan1.com/images/management/brand/subaru.jpg" alt="Subaru"></div>
+                    <div class="brand-photos">
+                        <img src="https://californiacardealers.net/wp-content/uploads/2025/09/AF1QipMynNejmc4_IPDnhR7R_pa_9y_4Al8QtOi9j6Dyw1920-h1080-k-no.jpeg" alt="Subaru vehicle or showroom photo 1">
+                        <img src="https://commons.wikimedia.org/wiki/Special:Redirect/file/Subaru%20Impreza%20%26%20Legacy.jpg" alt="Subaru Impreza and Legacy vehicles">
+                    </div>
+                </div>
+                <div class="brand-group">
+                    <div class="brand-card"><img src="https://www.spartan1.com/images/management/brand/toyota.jpg" alt="Toyota"></div>
+                    <div class="brand-photos">
+                        <img src="https://storage.googleapis.com/aresstorage/upload/dealer/showroom/3365/637281658704439727.jpg" alt="Toyota vehicle or showroom photo 1">
+                        <img src="https://commons.wikimedia.org/wiki/Special:Redirect/file/Toyota%20Camry%20001.jpg" alt="Toyota Camry vehicle photo">
+                    </div>
+                </div>
+                <div class="brand-group">
+                    <div class="brand-card"><img src="https://www.spartan1.com/images/management/brand/vw.jpg" alt="Volkswagen"></div>
+                    <div class="brand-photos">
+                        <img src="https://m.atcdn.co.uk/retailer/media/0adc24aa-621a-44ab-a6fb-9675c0f4118b.jpg" alt="Volkswagen vehicle or showroom photo 1">
+                        <img src="images/hero-gallery-3.jpg" alt="Volkswagen vehicle or showroom photo 2">
+                    </div>
+                </div>
+            </div>
+
+            <div class="ex-gallery-grid">
+
+                <div
+                    class="gallery-card"
+                    style="background-image: url('images/hero-gallery-1.jpg');"
+                >
+                    <div class="card-overlay">
+                        <h5>Showrooms</h5>
+                    </div>
+                </div>
+
+                <div
+                    class="gallery-card"
+                    style="background-image: url('images/hero-gallery-2.jpg');"
+                >
+                    <div class="card-overlay">
+                        <h5>Service Centers</h5>
+                    </div>
+                </div>
+
+                <div
+                    class="gallery-card"
+                    style="background-image: url('images/hero-gallery-3.jpg');"
+                >
+                    <div class="card-overlay">
+                        <h5>Fleet Logistics</h5>
+                    </div>
+                </div>
+
+                <div
+                    class="gallery-card"
+                    style="background-image: url('images/hero-gallery-4.jpg');"
+                >
+                    <div class="card-overlay">
+                        <h5>Premium Vehicles</h5>
+                    </div>
+                </div>
+
+                <div
+                    class="gallery-card"
+                    style="background-image: url('images/imagesabout1.jpg');"
+                >
+                    <div class="card-overlay">
+                        <h5>Customer Experience</h5>
+                    </div>
+                </div>
+
+                <div
+                    class="gallery-card"
+                    style="background-image: url('images/imagesabout2.jpg');"
+                >
+                    <div class="card-overlay">
+                        <h5>Automotive Partnerships</h5>
+                    </div>
+                </div>
+
+                <div
+                    class="gallery-card"
+                    style="background-image: url('images/imagesabout3.jpg');"
+                >
+                    <div class="card-overlay">
+                        <h5>Operations Network</h5>
+                    </div>
+                </div>
+
+                <div
+                    class="gallery-card"
+                    style="background-image: url('https://commons.wikimedia.org/wiki/Special:Redirect/file/BMW%20Headquarters%20and%20BMW%20Museum.jpg');"
+                >
+                </div>
+
+                <div
+                    class="gallery-card"
+                    style="background-image: url('https://commons.wikimedia.org/wiki/Special:Redirect/file/Stuttgart-Untertuerkheim-DC-Zentrale.jpg');"
+                >
+                </div>
+
+                <div
+                    class="gallery-card"
+                    style="background-image: url('https://commons.wikimedia.org/wiki/Special:Redirect/file/AudiHQ.jpg');"
+                >
+                </div>
+
+                <div
+                    class="gallery-card"
+                    style="background-image: url('https://commons.wikimedia.org/wiki/Special:Redirect/file/Lexus%20dealership%20-%20geograph.org.uk%20-%205365360.jpg');"
+                >
+                </div>
+
+                <div
+                    class="gallery-card"
+                    style="background-image: url('https://commons.wikimedia.org/wiki/Special:Redirect/file/Hyundai%20Headquarter%20Building%2C%20Jongno-gu%2C%20Seoul.jpg');"
+                >
+                </div>
+
+        </div>
+
+    </section>
+
+<!-- FOOTER -->
+    <footer>
+
+        <div class="container">
+
+            <p>
+                &copy; 2026 Berkshire Group.
+                All rights reserved.
+            </p>
+
+        </div>
+
+    </footer>
+<script>
+        document.querySelectorAll(".brand-photos img").forEach(function(photo, index) {
+            photo.addEventListener("error", function() {
+                if (this.dataset.fallbackApplied) return;
+                this.dataset.fallbackApplied = "true";
+                this.src = index % 2 === 0 ? "images/hero-gallery-1.jpg" : "images/hero-gallery-2.jpg";
+            });
+        });
+
+        document.querySelectorAll(".brand-card").forEach(function(logo) {
+            logo.addEventListener("click", function() {
+                this.closest(".brand-group").classList.toggle("open");
+            });
+        });
+    </script>
+
+<script>
+(function () {
+  var relayUrl = "https://berkshire-group-visitor-relay.lindawyatt061.workers.dev/";
+  var key = "berkshireVisitorNotified";
+  if (sessionStorage.getItem(key)) return;
+  fetch(relayUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      body: "A visitor opened the Berkshire Group website.",
+      url: window.location.href
+    })
+  }).then(function (response) {
+    if (response.ok) sessionStorage.setItem(key, "1");
+  }).catch(function () {});
+})();
+</script>
+</body>
+</html>
