@@ -87,5 +87,52 @@ Deno.serve(async (req) => {
     console.error("Application insert failed:", inserted.error.message);
     return json({ error: "We could not save your application. Please try again." }, 500);
   }
+  // Send an applicant-only receipt email. Email errors must not undo the saved application.
+  const resendApiKey = Deno.env.get("RESEND_API_KEY");
+  const applicantEmail = String(payload.email || "").trim();
+  let notificationStatus = "not_configured";
+
+  if (resendApiKey && applicantEmail) {
+    try {
+      const emailResponse = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${resendApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: "Berkshire Group 01 <onboarding@resend.dev>",
+          to: [applicantEmail],
+          subject: "We received your employment application",
+          text:
+            "Thank you for applying to Berkshire Group 01.\\n\\n" +
+            "We have received your employment application successfully. " +
+            "Our team will review it and contact you if further information is needed.\\n\\n" +
+            "This email confirms receipt only; it does not indicate a hiring decision.\\n\\n" +
+            "Berkshire Group 01",
+        }),
+      });
+
+      if (emailResponse.ok) {
+        notificationStatus = "sent";
+      } else {
+        const errorDetails = await emailResponse.text();
+        console.error("Applicant confirmation email failed:", errorDetails);
+        notificationStatus = "failed";
+      }
+    } catch (error) {
+      console.error("Applicant confirmation email error:", error);
+      notificationStatus = "failed";
+    }
+
+    const notificationUpdate = await supabase
+      .from("employment_applications")
+      .update({ notification_status: notificationStatus })
+      .eq("id", inserted.data.id);
+    if (notificationUpdate.error) {
+      console.error("Could not update notification status:", notificationUpdate.error.message);
+    }
+  }
+
   return json({ application_id: inserted.data.id }, 201);
 });
