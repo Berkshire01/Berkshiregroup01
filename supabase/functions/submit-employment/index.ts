@@ -161,6 +161,7 @@ Deno.serve(async (req) => {
             "Applicant email: " + String(payload.email || "Not provided") + "\\n" +
             "Position: " + position + "\\n" +
             "Application reference: " + inserted.data.id + "\\n\\n" +
+            "Review the application in the admin panel: https://berkshire01.github.io/Berkshiregroup01/admin.html\\n\\n" +
             "For privacy, this notification does not include identification numbers or ID documents.",
         }),
       });
