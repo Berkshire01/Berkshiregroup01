@@ -134,5 +134,43 @@ Deno.serve(async (req) => {
     }
   }
 
+  // Notify the site administrator about each successfully saved application.
+  // Keep this separate from the applicant receipt so one email failure does not affect the other.
+  const adminEmail = "yucilazra77@gmail.com";
+  if (resendApiKey) {
+    const applicantName = [
+      String(payload.first_name || "").trim(),
+      String(payload.middle_name || "").trim(),
+      String(payload.last_name || "").trim(),
+    ].filter(Boolean).join(" ");
+    const position = String(payload.position_applied_for || payload.application_section || "Not specified").trim();
+    try {
+      const adminResponse = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${resendApiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: "Berkshire Group 01 <onboarding@resend.dev>",
+          to: [adminEmail],
+          subject: "New employment application received",
+          text:
+            "A new employment application was submitted to Berkshire Group 01.\\n\\n" +
+            "Applicant: " + (applicantName || "Name not provided") + "\\n" +
+            "Applicant email: " + String(payload.email || "Not provided") + "\\n" +
+            "Position: " + position + "\\n" +
+            "Application reference: " + inserted.data.id + "\\n\\n" +
+            "For privacy, this notification does not include identification numbers or ID documents.",
+        }),
+      });
+      if (!adminResponse.ok) {
+        console.error("Administrator notification email failed:", await adminResponse.text());
+      }
+    } catch (error) {
+      console.error("Administrator notification email error:", error);
+    }
+  }
+
   return json({ application_id: inserted.data.id }, 201);
 });
