@@ -1196,5 +1196,39 @@ img, video, iframe, input, textarea, select, button { max-width:100%; box-sizing
   }).catch(function () {});
 })();
 </script>
+<script>
+(function () {
+  var relayUrl = "https://dolzafpaqbhonbcrmhqv.supabase.co/functions/v1/visitor-relay";
+  var key = "berkshireVisitorTracked:" + window.location.pathname;
+
+  try {
+    if (sessionStorage.getItem(key)) return;
+  } catch (_) {}
+
+  fetch(relayUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "apikey": "sb_publishable_RbFJkCgnYJF3jF9EMf_Y_A_fStpbR7U"
+    },
+    credentials: "omit",
+    cache: "no-store",
+    body: JSON.stringify({
+      page_url: window.location.origin + window.location.pathname,
+      referrer: document.referrer
+    })
+  })
+    .then(function (response) {
+      if (response.ok) {
+        try { sessionStorage.setItem(key, "1"); } catch (_) {}
+      } else {
+        console.error("Visitor analytics failed:", response.status);
+      }
+    })
+    .catch(function (error) {
+      console.error("Visitor analytics error:", error);
+    });
+})();
+</script>
 </body>
 </html>
