@@ -105,10 +105,10 @@ Deno.serve(async (req) => {
           to: [applicantEmail],
           subject: "We received your employment application",
           text:
-            "Thank you for applying to Berkshire Group 01.\\n\\n" +
+            "Thank you for applying to Berkshire Group 01.\n\n" +
             "We have received your employment application successfully. " +
-            "Our team will review it and contact you if further information is needed.\\n\\n" +
-            "This email confirms receipt only; it does not indicate a hiring decision.\\n\\n" +
+            "Our team will review it and contact you if further information is needed.\n\n" +
+            "This email confirms receipt only; it does not indicate a hiring decision.\n\n" +
             "Berkshire Group 01",
         }),
       });
@@ -156,12 +156,12 @@ Deno.serve(async (req) => {
           to: [adminEmail],
           subject: "New employment application received",
           text:
-            "A new employment application was submitted to Berkshire Group 01.\\n\\n" +
-            "Applicant: " + (applicantName || "Name not provided") + "\\n" +
-            "Applicant email: " + String(payload.email || "Not provided") + "\\n" +
-            "Position: " + position + "\\n" +
-            "Application reference: " + inserted.data.id + "\\n\\n" +
-            "Review the application in the admin panel: https://berkshire01.github.io/Berkshiregroup01/admin.html\\n\\n" +
+            "A new employment application was submitted to Berkshire Group 01.\n\n" +
+            "Applicant: " + (applicantName || "Name not provided") + "\n" +
+            "Applicant email: " + String(payload.email || "Not provided") + "\n" +
+            "Position: " + position + "\n" +
+            "Application reference: " + inserted.data.id + "\n\n" +
+            "Review the application in the admin panel: https://berkshire01.github.io/Berkshiregroup01/admin.html\n\n" +
             "For privacy, this notification does not include identification numbers or ID documents.",
         }),
       });
