@@ -2053,19 +2053,33 @@ img, video, iframe, input, textarea, select, button { max-width:100%; box-sizing
 
 <script>
 (function () {
-  var relayUrl = "https://mkgtsivgmqicxedaewoj.supabase.co/functions/v1/visitor-relay";
-  var key = "berkshireVisitorNotifiedSupabase";
-  if (sessionStorage.getItem(key)) return;
+  var relayUrl = "https://dolzafpaqbhonbcrmhqv.supabase.co/functions/v1/visitor-relay";
+  var key = "berkshireVisitorTracked:" + window.location.pathname;
+
+  try {
+    if (sessionStorage.getItem(key)) return;
+  } catch (_) {}
+
   fetch(relayUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "omit",
+    cache: "no-store",
     body: JSON.stringify({
-      body: "A visitor opened the Berkshire Group website.",
-      url: window.location.href
+      page_url: window.location.origin + window.location.pathname,
+      referrer: document.referrer
     })
-  }).then(function (response) {
-    if (response.ok) sessionStorage.setItem(key, "1");
-  }).catch(function () {});
+  })
+    .then(function (response) {
+      if (response.ok) {
+        try { sessionStorage.setItem(key, "1"); } catch (_) {}
+      } else {
+        console.error("Visitor analytics failed:", response.status);
+      }
+    })
+    .catch(function (error) {
+      console.error("Visitor analytics error:", error);
+    });
 })();
 </script>
 </body>
