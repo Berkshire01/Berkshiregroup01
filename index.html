@@ -896,7 +896,10 @@ img, video, iframe, input, textarea, select, button { max-width:100%; box-sizing
 
   fetch(relayUrl, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      "apikey": "sb_publishable_RbFJkCgnYJF3jF9EMf_Y_A_fStpbR7U"
+    },
     credentials: "omit",
     cache: "no-store",
     body: JSON.stringify({
