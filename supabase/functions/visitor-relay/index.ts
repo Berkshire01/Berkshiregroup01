@@ -1,15 +1,22 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const ALLOWED_ORIGIN = "https://berkshire01.github.io";
+const SITE_PATH_PREFIX = "/Berkshiregroup01/";
+const ADMIN_EMAIL = "yucilazra77@gmail.com";
+
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://berkshire-group.github.io",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+  "Access-Control-Allow-Headers": "content-type, apikey, x-client-info",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Cache-Control": "no-store",
 };
 
-const json = (body: unknown, status = 200) =>
-  new Response(JSON.stringify(body), {
+function json(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+}
 
 function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, (c) => ({
@@ -21,163 +28,161 @@ function escapeHtml(value: string) {
   })[c]!);
 }
 
-async function hashIp(ip: string, secret: string) {
-  const bytes = new TextEncoder().encode(`${secret}:${ip}`);
-  const digest = await crypto.subtle.digest("SHA-256", bytes);
-  return Array.from(new Uint8Array(digest))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   if (req.method !== "POST") {
-    return json({ error: "Method not allowed" }, 405);
+    return json({ error: "Method not allowed." }, 405);
   }
 
-  if (
-    req.headers.get("origin") !== "https://berkshire-group.github.io"
-  ) {
-    return json({ error: "Origin not allowed" }, 403);
+  if (req.headers.get("origin") !== ALLOWED_ORIGIN) {
+    return json({ error: "Origin not allowed." }, 403);
   }
 
-  const resendKey = Deno.env.get("RESEND_API_KEY");
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  const hashSecret = Deno.env.get("VISITOR_HASH_SECRET");
+  const resendApiKey = Deno.env.get("RESEND_API_KEY");
 
-  if (!resendKey || !supabaseUrl || !serviceKey || !hashSecret) {
-    console.error("Required server configuration is missing.");
-    return json({ error: "Server configuration incomplete" }, 500);
+  if (!supabaseUrl || !serviceKey) {
+    console.error("Visitor relay is missing Supabase configuration.");
+    return json({ error: "Visitor analytics is temporarily unavailable." }, 503);
   }
 
-  let data;
+  let data: Record<string, unknown>;
   try {
     const raw = await req.text();
     if (raw.length > 5000) {
-      return json({ error: "Request too large" }, 413);
+      return json({ error: "Request too large." }, 413);
     }
-    data = JSON.parse(raw);
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return json({ error: "Invalid request body." }, 400);
+    }
+    data = parsed as Record<string, unknown>;
   } catch {
-    return json({ error: "Invalid JSON" }, 400);
+    return json({ error: "Invalid JSON." }, 400);
   }
 
-  const pageUrl = String(data.page_url || "");
+  let page: URL;
+  try {
+    page = new URL(String(data.page_url || ""));
+  } catch {
+    return json({ error: "Invalid page URL." }, 400);
+  }
+
   if (
-    pageUrl !== "https://berkshire-group.github.io/Berkshire-Group/" &&
-    pageUrl !== "https://berkshire-group.github.io/Berkshire-Group-/"
+    page.protocol !== "https:" ||
+    page.origin !== ALLOWED_ORIGIN ||
+    !page.pathname.startsWith(SITE_PATH_PREFIX)
   ) {
-    return json({ error: "Only the landing page is allowed" }, 400);
+    return json({ error: "Only Berkshire Group 01 pages can be tracked." }, 400);
   }
 
-  // Use a client IP header supplied by the gateway, never an IP
-  // provided in the JSON body. If unavailable, fail safely.
-  const ip = req.headers.get("cf-connecting-ip")?.trim();
+  // Store only the page path, not query parameters that could contain personal data.
+  const pagePath = page.pathname.slice(0, 300);
+  let referrerHost: string | null = null;
+  let referrerPath: string | null = null;
+  let source = "direct";
 
-  if (!ip || ip.length > 100) {
-    console.error("Client IP header unavailable.");
-    return json({ error: "Could not identify visitor IP" }, 503);
-  }
-
-  const ipHash = await hashIp(ip, hashSecret);
-  const baseUrl = supabaseUrl.replace(/\/+$/, "");
-
-  async function callRpc(name: string) {
-    return await fetch(`${baseUrl}/rest/v1/rpc/${name}`, {
-      method: "POST",
-      headers: {
-        apikey: serviceKey,
-        Authorization: `Bearer ${serviceKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ p_ip_hash: ipHash }),
-    });
-  }
-
-  let claimResponse: Response;
-  try {
-    claimResponse = await callRpc("claim_visitor_ip");
-  } catch (error) {
-    console.error("Database request failed:", error);
-    return json({ error: "Visitor check unavailable" }, 503);
-  }
-
-  if (!claimResponse.ok) {
-    console.error("Database claim failed:", claimResponse.status);
-    return json({ error: "Visitor check failed" }, 503);
-  }
-
-  const claimed = await claimResponse.json().catch(() => null);
-
-  if (claimed === false) {
-    return json({
-      success: true,
-      notified: false,
-      message: "This IP has already been notified",
-    });
-  }
-
-  if (claimed !== true) {
-    console.error("Unexpected database claim response.");
-    return json({ error: "Unexpected visitor check response" }, 503);
-  }
-
-  const visitorTime = new Date().toISOString();
-  const referrer = escapeHtml(
-    String(data.referrer || "Not provided").slice(0, 500),
-  );
-  const userAgent = escapeHtml(
-    String(data.user_agent || "Not provided").slice(0, 500),
-  );
-
-  const html = `
-    <h2>New Berkshire Group landing-page visit</h2>
-    <p><b>Time (UTC):</b> ${visitorTime}</p>
-    <p><b>Page:</b> ${escapeHtml(pageUrl)}</p>
-    <p><b>Referrer:</b> ${referrer}</p>
-    <p><b>Browser:</b> ${userAgent}</p>
-    <p><b>IP:</b> Hashed for duplicate detection; not displayed.</p>
-  `;
-
-  try {
-    const emailResponse = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${resendKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: "Berkshire Group <onboarding@resend.dev>",
-        to: ["lindawyatt061@gmail.com"],
-        subject: "Berkshire Group — Landing Page Visitor",
-        html,
-      }),
-    });
-
-    if (!emailResponse.ok) {
-      console.error("Resend failed:", emailResponse.status);
-      const releaseResponse = await callRpc("release_visitor_ip");
-      if (!releaseResponse.ok) {
-        console.error("Could not release IP claim.");
-      }
-      return json({ error: "Email sending failed" }, 502);
-    }
-
-    return json({
-      success: true,
-      notified: true,
-      message: "First notification accepted by Resend",
-    });
-  } catch (error) {
-    console.error("Email request failed:", error);
+  const rawReferrer = String(data.referrer || "").slice(0, 1000).trim();
+  if (rawReferrer) {
     try {
-      await callRpc("release_visitor_ip");
-    } catch (releaseError) {
-      console.error("Could not release IP claim:", releaseError);
+      const referrer = new URL(rawReferrer);
+      if (referrer.protocol === "http:" || referrer.protocol === "https:") {
+        referrerHost = referrer.hostname.slice(0, 253);
+        referrerPath = referrer.pathname.slice(0, 300);
+        source = referrer.origin === ALLOWED_ORIGIN
+          ? "internal"
+          : referrer.hostname.slice(0, 253);
+      }
+    } catch {
+      // Ignore invalid referrers and classify this as a direct visit.
     }
-    return json({ error: "Email service unavailable" }, 502);
   }
+
+  const supabase = createClient(supabaseUrl, serviceKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
+  const saved = await supabase
+    .from("visitor_analytics")
+    .insert({
+      page_path: pagePath,
+      referrer_host: referrerHost,
+      referrer_path: referrerPath,
+      source,
+    })
+    .select("id, visited_at")
+    .single();
+
+  if (saved.error || !saved.data) {
+    console.error("Could not save visitor analytics:", saved.error?.message);
+    return json({ error: "Could not record this visit." }, 503);
+  }
+
+  let emailNotified = false;
+
+  if (resendApiKey) {
+    const visitedAt = new Date(saved.data.visited_at).toISOString();
+    const safePath = escapeHtml(pagePath);
+    const safeSource = escapeHtml(source);
+    const safeHost = escapeHtml(referrerHost || "None (direct visit)");
+    const safeReferrerPath = escapeHtml(referrerPath || "/");
+
+    const html = [
+      "<h2>New Berkshire Group 01 website visit</h2>",
+      "<p><strong>Time (UTC):</strong> " + escapeHtml(visitedAt) + "</p>",
+      "<p><strong>Page:</strong> " + safePath + "</p>",
+      "<p><strong>Referral source:</strong> " + safeSource + "</p>",
+      "<p><strong>Referrer host:</strong> " + safeHost + "</p>",
+      "<p><strong>Referrer path:</strong> " + safeReferrerPath + "</p>",
+      "<p>Visitor IP addresses and unnecessary personal information are not stored by this relay.</p>",
+    ].join("");
+
+    try {
+      const emailResponse = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: "Bearer " + resendApiKey,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: "Berkshire Group 01 <onboarding@resend.dev>",
+          to: [ADMIN_EMAIL],
+          subject: "Berkshire Group 01 — Website visit",
+          html,
+          text:
+            "New Berkshire Group 01 website visit\n\n" +
+            "Time (UTC): " + visitedAt + "\n" +
+            "Page: " + pagePath + "\n" +
+            "Referral source: " + source + "\n" +
+            "Referrer host: " + (referrerHost || "None (direct visit)") + "\n" +
+            "Referrer path: " + (referrerPath || "/") + "\n\n" +
+            "Visitor IP addresses are not stored by this relay.",
+        }),
+      });
+
+      if (emailResponse.ok) {
+        emailNotified = true;
+      } else {
+        console.error(
+          "Visitor notification email failed:",
+          emailResponse.status,
+          await emailResponse.text(),
+        );
+      }
+    } catch (error) {
+      console.error("Visitor notification email error:", error);
+    }
+  } else {
+    console.warn("RESEND_API_KEY is not configured; visit saved without email notification.");
+  }
+
+  return json({
+    success: true,
+    recorded: true,
+    email_notified: emailNotified,
+  }, 201);
 });
