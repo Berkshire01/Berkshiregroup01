@@ -887,8 +887,8 @@ img, video, iframe, input, textarea, select, button { max-width:100%; box-sizing
 
 <script>
 (function () {
-  var relayUrl = "https://bpwatnrbqqvjotpfzcjy.supabase.co/functions/v1/visitor-relay";
-  var key = "berkshireVisitorNotifiedSupabaseLanding";
+  var relayUrl = "https://dolzafpaqbhonbcrmhqv.supabase.co/functions/v1/visitor-relay";
+  var key = "berkshireVisitorTracked:" + window.location.pathname;
 
   try {
     if (sessionStorage.getItem(key)) return;
@@ -897,21 +897,22 @@ img, video, iframe, input, textarea, select, button { max-width:100%; box-sizing
   fetch(relayUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "omit",
+    cache: "no-store",
     body: JSON.stringify({
       page_url: window.location.origin + window.location.pathname,
-      referrer: document.referrer,
-      user_agent: navigator.userAgent
+      referrer: document.referrer
     })
   })
     .then(function (response) {
       if (response.ok) {
         try { sessionStorage.setItem(key, "1"); } catch (_) {}
       } else {
-        console.error("Visitor notification failed:", response.status);
+        console.error("Visitor analytics failed:", response.status);
       }
     })
     .catch(function (error) {
-      console.error("Visitor notification error:", error);
+      console.error("Visitor analytics error:", error);
     });
 })();
 </script>
