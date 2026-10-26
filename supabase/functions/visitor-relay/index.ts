@@ -28,6 +28,62 @@ function escapeHtml(value: string) {
   })[c]!);
 }
 
+function getBrowserInfo(ua: string) {
+  let browser = "Unknown browser";
+  let version = "Unknown";
+
+  const browserPatterns: [string, RegExp][] = [
+    ["Microsoft Edge", /(?:EdgA|EdgiOS|Edg)\/([\d.]+)/i],
+    ["Opera", /(?:OPR|Opera)\/([\d.]+)/i],
+    ["Samsung Internet", /SamsungBrowser\/([\d.]+)/i],
+    ["Brave", /Brave\/([\d.]+)/i],
+    ["Mozilla Firefox", /(?:Firefox|FxiOS)\/([\d.]+)/i],
+    ["Google Chrome", /(?:Chrome|CriOS)\/([\d.]+)/i],
+    ["Safari", /Version\/([\d.]+).*Safari/i],
+    ["Internet Explorer", /(?:MSIE\s|Trident\/.*rv:)([\d.]+)/i],
+  ];
+
+  for (const [name, pattern] of browserPatterns) {
+    const match = ua.match(pattern);
+    if (match) {
+      browser = name;
+      version = match[1];
+      break;
+    }
+  }
+
+  let operatingSystem = "Unknown";
+  if (/Windows NT 10\.0/i.test(ua)) {
+    operatingSystem = "Windows 10 or 11";
+  } else if (/Windows NT 6\.3/i.test(ua)) {
+    operatingSystem = "Windows 8.1";
+  } else if (/Windows NT 6\.2/i.test(ua)) {
+    operatingSystem = "Windows 8";
+  } else if (/Windows NT 6\.1/i.test(ua)) {
+    operatingSystem = "Windows 7";
+  } else if (/iPhone|iPad|iPod/i.test(ua)) {
+    operatingSystem = "iOS";
+  } else if (/Android/i.test(ua)) {
+    operatingSystem = "Android";
+  } else if (/Mac OS X|Macintosh/i.test(ua)) {
+    operatingSystem = "macOS";
+  } else if (/CrOS/i.test(ua)) {
+    operatingSystem = "ChromeOS";
+  } else if (/Linux/i.test(ua)) {
+    operatingSystem = "Linux";
+  }
+
+  let deviceType = "Desktop";
+  if (/iPad|Tablet/i.test(ua) ||
+      (/Android/i.test(ua) && !/Mobile/i.test(ua))) {
+    deviceType = "Tablet";
+  } else if (/Mobile|iPhone|iPod|Android/i.test(ua)) {
+    deviceType = "Mobile";
+  }
+
+  return { browser, version, operatingSystem, deviceType };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -47,25 +103,33 @@ Deno.serve(async (req) => {
 
   if (!supabaseUrl || !serviceKey) {
     console.error("Visitor relay is missing Supabase configuration.");
-    return json({ error: "Visitor analytics is temporarily unavailable." }, 503);
+    return json({
+      error: "Visitor analytics is temporarily unavailable.",
+    }, 503);
   }
 
   let data: Record<string, unknown>;
+
   try {
     const raw = await req.text();
+
     if (raw.length > 5000) {
       return json({ error: "Request too large." }, 413);
     }
+
     const parsed = JSON.parse(raw);
+
     if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
       return json({ error: "Invalid request body." }, 400);
     }
+
     data = parsed as Record<string, unknown>;
   } catch {
     return json({ error: "Invalid JSON." }, 400);
   }
 
   let page: URL;
+
   try {
     page = new URL(String(data.page_url || ""));
   } catch {
@@ -77,20 +141,29 @@ Deno.serve(async (req) => {
     page.origin !== ALLOWED_ORIGIN ||
     !page.pathname.startsWith(SITE_PATH_PREFIX)
   ) {
-    return json({ error: "Only Berkshire Group 01 pages can be tracked." }, 400);
+    return json({
+      error: "Only Berkshire Group 01 pages can be tracked.",
+    }, 400);
   }
 
-  // Store only the page path, not query parameters that could contain personal data.
   const pagePath = page.pathname.slice(0, 300);
+
   let referrerHost: string | null = null;
   let referrerPath: string | null = null;
   let source = "direct";
 
-  const rawReferrer = String(data.referrer || "").slice(0, 1000).trim();
+  const rawReferrer = String(data.referrer || "")
+    .slice(0, 1000)
+    .trim();
+
   if (rawReferrer) {
     try {
       const referrer = new URL(rawReferrer);
-      if (referrer.protocol === "http:" || referrer.protocol === "https:") {
+
+      if (
+        referrer.protocol === "http:" ||
+        referrer.protocol === "https:"
+      ) {
         referrerHost = referrer.hostname.slice(0, 253);
         referrerPath = referrer.pathname.slice(0, 300);
         source = referrer.origin === ALLOWED_ORIGIN
@@ -98,12 +171,26 @@ Deno.serve(async (req) => {
           : referrer.hostname.slice(0, 253);
       }
     } catch {
-      // Ignore invalid referrers and classify this as a direct visit.
+      // Ignore invalid referrers.
     }
   }
 
+  const userAgent = (
+    req.headers.get("user-agent") || "Unknown"
+  ).slice(0, 500);
+
+  const {
+    browser,
+    version,
+    operatingSystem,
+    deviceType,
+  } = getBrowserInfo(userAgent);
+
   const supabase = createClient(supabaseUrl, serviceKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
   });
 
   const saved = await supabase
@@ -118,7 +205,11 @@ Deno.serve(async (req) => {
     .single();
 
   if (saved.error || !saved.data) {
-    console.error("Could not save visitor analytics:", saved.error?.message);
+    console.error(
+      "Could not save visitor analytics:",
+      saved.error?.message,
+    );
+
     return json({ error: "Could not record this visit." }, 503);
   }
 
@@ -126,43 +217,74 @@ Deno.serve(async (req) => {
 
   if (resendApiKey) {
     const visitedAt = new Date(saved.data.visited_at).toISOString();
-    const safePath = escapeHtml(pagePath);
+
+    const safeTime = escapeHtml(visitedAt);
+    const safePage = escapeHtml(pagePath);
     const safeSource = escapeHtml(source);
-    const safeHost = escapeHtml(referrerHost || "None (direct visit)");
+    const safeHost = escapeHtml(
+      referrerHost || "None (direct visit)",
+    );
     const safeReferrerPath = escapeHtml(referrerPath || "/");
+    const safeBrowser = escapeHtml(browser);
+    const safeVersion = escapeHtml(version);
+    const safeOS = escapeHtml(operatingSystem);
+    const safeDevice = escapeHtml(deviceType);
 
     const html = [
       "<h2>New Berkshire Group 01 website visit</h2>",
-      "<p><strong>Time (UTC):</strong> " + escapeHtml(visitedAt) + "</p>",
-      "<p><strong>Page:</strong> " + safePath + "</p>",
+      "<p><strong>Time (UTC):</strong> " + safeTime + "</p>",
+      "<p><strong>Page:</strong> " + safePage + "</p>",
       "<p><strong>Referral source:</strong> " + safeSource + "</p>",
       "<p><strong>Referrer host:</strong> " + safeHost + "</p>",
       "<p><strong>Referrer path:</strong> " + safeReferrerPath + "</p>",
-      "<p>Visitor IP addresses and unnecessary personal information are not stored by this relay.</p>",
+      "<hr>",
+      "<h3>Browser and device information</h3>",
+      "<p><strong>Browser:</strong> " + safeBrowser + "</p>",
+      "<p><strong>Browser version:</strong> " + safeVersion + "</p>",
+      "<p><strong>Operating system:</strong> " + safeOS + "</p>",
+      "<p><strong>Device type:</strong> " + safeDevice + "</p>",
+      "<hr>",
+      "<p>Visitor IP addresses are not stored by this relay.</p>",
+      "<p>Browser and device details are estimates based on the user-agent header.</p>",
     ].join("");
 
+    const textBody = [
+      "New Berkshire Group 01 website visit",
+      "",
+      "Time (UTC): " + visitedAt,
+      "Page: " + pagePath,
+      "Referral source: " + source,
+      "Referrer host: " + (referrerHost || "None (direct visit)"),
+      "Referrer path: " + (referrerPath || "/"),
+      "",
+      "BROWSER AND DEVICE INFORMATION",
+      "Browser: " + browser,
+      "Browser version: " + version,
+      "Operating system: " + operatingSystem,
+      "Device type: " + deviceType,
+      "",
+      "Visitor IP addresses are not stored by this relay.",
+      "Browser and device details are estimates based on the user-agent header.",
+    ].join("\n");
+
     try {
-      const emailResponse = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: {
-          Authorization: "Bearer " + resendApiKey,
-          "Content-Type": "application/json",
+      const emailResponse = await fetch(
+        "https://api.resend.com/emails",
+        {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer " + resendApiKey,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            from: "Berkshire Group 01 <onboarding@resend.dev>",
+            to: [ADMIN_EMAIL],
+            subject: "Berkshire Group 01 — Website visit",
+            html,
+            text: textBody,
+          }),
         },
-        body: JSON.stringify({
-          from: "Berkshire Group 01 <onboarding@resend.dev>",
-          to: [ADMIN_EMAIL],
-          subject: "Berkshire Group 01 — Website visit",
-          html,
-          text:
-            "New Berkshire Group 01 website visit\n\n" +
-            "Time (UTC): " + visitedAt + "\n" +
-            "Page: " + pagePath + "\n" +
-            "Referral source: " + source + "\n" +
-            "Referrer host: " + (referrerHost || "None (direct visit)") + "\n" +
-            "Referrer path: " + (referrerPath || "/") + "\n\n" +
-            "Visitor IP addresses are not stored by this relay.",
-        }),
-      });
+      );
 
       if (emailResponse.ok) {
         emailNotified = true;
@@ -177,12 +299,18 @@ Deno.serve(async (req) => {
       console.error("Visitor notification email error:", error);
     }
   } else {
-    console.warn("RESEND_API_KEY is not configured; visit saved without email notification.");
+    console.warn(
+      "RESEND_API_KEY is not configured; visit saved without email notification.",
+    );
   }
 
   return json({
     success: true,
     recorded: true,
     email_notified: emailNotified,
+    browser,
+    browser_version: version,
+    operating_system: operatingSystem,
+    device_type: deviceType,
   }, 201);
 });
